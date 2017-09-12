@@ -197,3 +197,33 @@ function parse(src) {
   }
   return ["module", sections];
 }
+
+function compile(src) {
+  function check(issue, stuff) {
+    return stuff.map((s, i) => s == issue[i]).reduce((a, b) => a && b, true);
+  }
+
+  const ast = parse(src);
+  const main = ast[1];
+
+  let types = [],
+      funcs = [],
+      exports = [],
+      code = [];
+
+  for (let i = 0; i < main.length; i++) {
+    const section = main[i];
+    if (check(section, ["type"])) {
+      types.push(section);
+    }
+    else if (check(section, ["fn"])) {
+      funcs.push(section);
+    }
+    else if (check(section, ["export"])) {
+      funcs.push(section);
+    }
+    else if (check(section, ["body"])) {
+      code.push(section);
+    }
+  }
+}
