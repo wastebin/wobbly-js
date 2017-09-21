@@ -1,5 +1,5 @@
-function leb(n) {
-  const bytes = [], size = 32;
+function LEB(n) {
+  const bytes = [];
 
   let more = true;
 
@@ -12,6 +12,18 @@ function leb(n) {
 
     bytes.push(byte);
   }
+  return bytes;
+}
+function uLEB(n) {
+  const bytes = [];
+
+  do {
+    let byte = n & 0x7F;
+    n >>= 7;
+    if (n) byte |= 0x80;
+    bytes.push(byte);
+  } while (n);
+
   return bytes;
 }
 
