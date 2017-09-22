@@ -118,13 +118,13 @@ function parse(src) {
     global: 3
   };
   const types = {
-    i32: leb(-0x01),
-    i64: leb(-0x02),
-    f32: leb(-0x03),
-    f64: leb(-0x04),
-    "any-func": leb(-0x10),
-    func: leb(-0x20),
-    block: leb(0x40)
+    i32: LEB(-0x01),
+    i64: LEB(-0x02),
+    f32: LEB(-0x03),
+    f64: LEB(-0x04),
+    "any-func": LEB(-0x10),
+    func: LEB(-0x20),
+    block: LEB(0x40)
   };
 
   const t = tokenStream(src);
