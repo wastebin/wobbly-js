@@ -1,3 +1,23 @@
+function check(thing, stuff) {
+  return stuff.map((s, i) => s == thing[i]).reduce((a, b) => a && b, true);
+}
+function expect(stream, thing, stuff) {
+  if (!check(thing, stuff)) stream.error(`Expected ${stuff.join(" ")}, found ${thing.join(" ")}`);
+}
+function trySkip(read, thing, stuff) {
+  if (check(thing, stuff)) {
+    read();
+    return true;
+  }
+  return false;
+}
+function skip(stream, read, thing, stuff) {
+  expect(stream, thing, stuff);
+  const old = thing;
+  read();
+  return old;
+}
+
 function LEB(n) {
   const bytes = [];
 
@@ -135,68 +155,48 @@ function parse(src) {
   }
   read();
 
-  function check(stuff) {
-    return stuff.map((s, i) => s == token[i]).reduce((a, b) => a && b, true);
-  }
-  function expect(stuff) {
-    if (!check(stuff)) t.error(`Expected ${stuff.join(" ")}, found ${token.join(" ")}`);
-  }
-  function trySkip(stuff) {
-    if (check(stuff)) {
-      read();
-      return true;
-    }
-    return false;
-  }
-  function skip(stuff) {
-    expect(stuff);
-    const old = token;
-    read();
-    return old;
-  }
-
   function parseInst() {
-    if (trySkip(["word", "get_local"])) {
-      return ["get_local", skip(["num"])];
+    if (trySkip(t, token, ["word", "get_local"])) {
+      return ["get_local", skip(t, read, token, ["num"])];
     }
-    else if (trySkip(["word", "i32.add"])) return ["add", "i32"];
+    else if (trySkip(t, token, ["word", "i32.add"])) return ["add", "i32"];
     else t.error(`Unknown instruction ${token.join(" ")}`);
   }
 
   function parseSec() {
-    if (trySkip(["word", "type"])) {
-      skip(["word", "fn"]);
-      skip(["punc", "("]);
+    if (trySkip(t, token, ["word", "type"])) {
+      skip(t, read, token, ["word", "fn"]);
+      skip(t, read, token, ["punc", "("]);
       const argTypes = [];
-      while (check(["word"])) {
+      while (check(token, ["word"])) {
         if (token[1] in types) argTypes.push(token[1]);
         else t.error(`Expected a type, found ${token.join(" ")}`);
-        skip(["word"]);
+        skip(t, read, token, ["word"]);
       }
-      skip(["punc", ")"]);
-      skip(["punc", "("]);
+      skip(t, read, token, ["punc", ")"]);
+      skip(t, read, token, ["punc", "("]);
       const retTypes = [];
-      while (check(["word"])) {
+      while (check(token, ["word"])) {
         if (token[1] in types) retTypes.push(token[1]);
         else t.error(`Expected a type, found ${token.join(" ")}`);
-        skip(["word"]);
+        skip(t, read, token, ["word"]);
       }
-      skip(["punc", ")"]);
+      skip(t, read, token, ["punc", ")"]);
 
       return ["type", argTypes, retTypes];
     }
-    else if (trySkip(["word", "fn"])) {
-      return ["fn", skip(["num"])];
+    else if (trySkip(t, token, ["word", "fn"])) {
+      return ["fn", skip(t, read, token, ["num"])];
     }
-    else if (trySkip(["word", "export"])) {
-      const handle = skip(["str"]);
-      skip(["word", "fn"]);
-      return ["export", handle, skip(["num"])];
+    else if (trySkip(t, token, ["word", "export"])) {
+      const handle = skip(t, read, token, ["str"]);
+      skip(t, read, token, ["word", "fn"]);
+      return ["export", handle, skip(t, read, token, ["num"])];
     }
-    else if (trySkip(["word", "body"])) {
-      const numLocals = skip(["num"])[1];
+    else if (trySkip(t, token, ["word", "body"])) {
+      const numLocals = skip(t, read, token, ["num"])[1];
       const body = [];
-      while (!done && !trySkip(["word", "end"])) {
+      while (!done && !trySkip(t, token, ["word", "end"])) {
         body.push(parseInst());
       }
       return ["body", numLocals, body];
@@ -211,9 +211,6 @@ function parse(src) {
 }
 
 function compile(src) {
-  function check(issue, stuff) {
-    return stuff.map((s, i) => s == issue[i]).reduce((a, b) => a && b, true);
-  }
 
   const ast = parse(src);
   const main = ast[1];
