@@ -1,2 +1,2 @@
 # WobblyJS
-A compiler for Wobbly in Javascript targeting WebAssembly. It is probably buggy.
+A compiler for Wobbly in Javascript targeting WebAssembly. It is probably buggy and definitely incomplete.
